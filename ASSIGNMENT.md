@@ -1,190 +1,207 @@
-# Teme pe acasă - Laborator 8
+# Lab 8 — Design Patterns în Kotlin
 
-Două teme independente, fiecare centrată pe câteva design patterns.
+## Descriere
+
+Trei teme independente, fiecare demonstrând un design pattern clasic:
+
+| Temă | Pattern | Fișiere principale |
+|------|---------|-------------------|
+| 1 | Observer | `observer/Kitchen.kt`, `observer/MealObserver.kt`, `observer/OrderLog.kt` |
+| 2 | Composite | `composite/MindObject.kt`, `composite/Calatorie.kt`, `composite/Activitate.kt`, `composite/Idee.kt`, `composite/Cadou.kt` |
+| 3 | Memento | `memento/Clock.kt`, `memento/ClockMemento.kt`, `memento/ClockCaretaker.kt` |
 
 ---
 
-## Tema 1: Porți logice AND
-
-Să se proiecteze și să se implementeze o aplicație care calculează ieșirile unor porți AND cu **2, 3, 4 și 8 intrări**, utilizând trei design patterns:
-
-- **Bridge** — decuplează abstractizarea porții de implementarea calculului
-- **Builder** — construiește fiecare poartă adăugând intrările una câte una
-- **State (automat finit)** — calculează ieșirea porții prin tranzițiile automatului
-
-### Structura proiectului
+## Structura proiectului
 
 ```
-gates/
-  bridge/
-    AndImplementation.kt       ← interfața de calcul (latura implementării din Bridge)
-    StateMachineAndImpl.kt     ← implementare concretă care folosește automatul de stări
-  state/
-    GateState.kt               ← sealed class cu stările automatului
-  abstraction/
-    AndGate.kt                 ← clasa abstractă a porții (latura abstractizării din Bridge)
-    TwoInputGate.kt            ← poartă AND cu 2 intrări
-    ThreeInputGate.kt
-    FourInputGate.kt
-    EightInputGate.kt
-  builder/
-    AndGateBuilder.kt          ← interfața builder
-    TwoInputGateBuilder.kt     ← builder concret pentru TwoInputGate
-    ThreeInputGateBuilder.kt
-    FourInputGateBuilder.kt
-    EightInputGateBuilder.kt
-  Main1.kt
-```
-
-### Cerințe pas cu pas
-
-#### 1. Automatul de stări — `GateState.kt`
-
-O poartă AND are ieșirea `1` doar dacă **toate** intrările sunt `1`. Modelează aceasta cu două stări:
-
-| Stare | Semnificație | `output()` |
-|---|---|---|
-| `AllHighState` | Toate intrările văzute până acum sunt `true` | `true` |
-| `AnyLowState` | Cel puțin o intrare a fost `false` | `false` |
-
-Tranzițiile automatului:
-- `AllHighState.process(true)` → `AllHighState`
-- `AllHighState.process(false)` → `AnyLowState`
-- `AnyLowState.process(_)` → `AnyLowState` *(stare absorbantă)*
-
-#### 2. Implementarea Bridge — `StateMachineAndImpl.kt`
-
-Implementează `AndImplementation.compute(inputs)`:
-1. Pornește din `AllHighState`.
-2. Aplică `process()` pentru fiecare input din listă.
-3. Returnează `output()` al stării finale.
-
-#### 3. Abstractizarea Bridge — `AndGate.kt`
-
-Clasa abstractă deține:
-- o referință la `AndImplementation` (primită prin constructor)
-- lista de intrări acumulată
-- proprietatea abstractă `expectedInputs: Int`
-
-Metodele:
-- `addInput(value: Boolean): AndGate` — adaugă o intrare; aruncă `IllegalStateException` dacă s-a depășit `expectedInputs`
-- `output(): Boolean` — delege calculul la `impl.compute(inputs)`; aruncă `IllegalStateException` dacă nu s-au furnizat toate intrările
-
-#### 4. Clasele concrete ale porților
-
-`TwoInputGate`, `ThreeInputGate`, `FourInputGate`, `EightInputGate` — fiecare extinde `AndGate` și setează `expectedInputs` la valoarea corespunzătoare.
-
-#### 5. Builder-ele
-
-Fiecare builder (`TwoInputGateBuilder` etc.) stochează intrările intern și le aplică pe poartă la `build()`.
-- `build()` aruncă `IllegalStateException` dacă nu s-au furnizat exact `expectedInputs` intrări.
-
-### Exemplu de utilizare
-
-```kotlin
-val gate = TwoInputGateBuilder()
-    .addInput(true)
-    .addInput(false)
-    .build()
-println(gate.output()) // false
+lab08/
+  src/
+    main/kotlin/ro/tuiasi/pp/lab8/
+      observer/
+        MealObserver.kt      ← interfața Observer
+        Kitchen.kt           ← clasa Observable (stub)
+        OrderLog.kt          ← Observer concret: jurnalizare comenzi (stub)
+      composite/
+        MindObject.kt        ← interfața Composite
+        Calatorie.kt         ← rădăcina arborelui (stub)
+        Activitate.kt        ← nod intern cu copii (stub)
+        Idee.kt              ← frunză (stub)
+        Cadou.kt             ← frunză (stub)
+      memento/
+        ClockMemento.kt      ← memento (valori imutabile)
+        Clock.kt             ← Originator: ceas cu tickOnce (stub)
+        ClockCaretaker.kt    ← Caretaker: stivă LIFO (stub)
+    test/kotlin/ro/tuiasi/pp/lab8/
+      ObserverTest.kt
+      CompositeTest.kt
+      MementoTest.kt
+  build.gradle.kts
+  settings.gradle.kts
+  .github/workflows/classroom.yml
+  ASSIGNMENT.md
+  README.md
 ```
 
 ---
 
-## Tema 2: Browser pentru copii
+## Tema 1 — Observer: Bucătărie (Burger King)
 
-Să se proiecteze și să se implementeze un browser pentru copii utilizând trei design patterns:
+Se implementează un sistem de notificări pentru activitatea dintr-un restaurant. La fiecare
+servire, toți observatorii înregistrați sunt notificați cu angajatul, produsul și clientul.
 
-- **Prototype** — clonarea cererii HTTP generice
-- **Proxy** — control parental care blochează anumite domenii
-- **Facade** — interfață simplă de navigare
-
-### Structura proiectului
-
-```
-browser/
-  HttpRequest.kt              ← cerere HTTP (Prototype)
-  HttpClient.kt               ← interfață + implementare reală (stub pentru teste)
-  ParentalControlProxy.kt     ← Proxy cu control parental
-  KidsBrowserFacade.kt        ← Facade
-  Main2.kt
-```
-
-### Cerințe pas cu pas
-
-#### 1. Prototype — `HttpRequest.kt`
-
-`HttpRequest` este o `data class` cu câmpurile `url: String` și `headers: Map<String, String>`.
-Implementează interfața `Prototype<HttpRequest>`, unde `clone()` returnează o copie a obiectului (folosind `copy()`).
-
-#### 2. Proxy — `ParentalControlProxy.kt`
-
-`ParentalControlProxy` implementează `HttpClient` și primește:
-- un `HttpClient` real (delegat)
-- o mulțime `blockedDomains: Set<String>`
-
-Logica `get(request)`:
-1. Extrage domeniul din URL (ex: `"badsite.com"` din `"https://badsite.com/page"`).
-2. Dacă domeniul se află în `blockedDomains` → returnează `HttpResponse(403, "Acces blocat de controlul parental.")` **fără** a apela clientul real.
-3. Altfel → delege cererea clientului real.
-
-> **Hint:** `java.net.URI(url).host` extrage domeniul dintr-un URL.
-
-#### 3. Facade — `KidsBrowserFacade.kt`
-
-`KidsBrowserFacade` primește un `HttpClient` (care va fi proxy-ul).
-
-Metoda `browse(url: String): String`:
-1. Clonează cererea prototip de bază și setează `url`-ul primit.
-2. Trimite cererea prin `client.get()`.
-3. Dacă `statusCode == 200` returnează `body`-ul; altfel returnează mesajul de eroare din `body`.
-
-### Exemplu de utilizare
+### `MealObserver` (interfață — gata)
 
 ```kotlin
-val proxy = ParentalControlProxy(
-    client = RealHttpClient(),
-    blockedDomains = setOf("badsite.com", "violence.net")
+interface MealObserver {
+    fun onMealServed(employee: String, product: String, customer: String)
+}
+```
+
+### `Kitchen` (stub)
+
+**Câmpuri:**
+- `employees: MutableList<String>` — lista angajaților disponibili (pasată la construcție)
+- `products: MutableList<String>` — lista produselor disponibile (pasată la construcție)
+- `observers: MutableList<MealObserver>` — observatorii înregistrați (privat)
+
+**Metode de implementat:**
+
+| Metodă | Comportament |
+|--------|-------------|
+| `addObserver(observer)` | Adaugă observatorul la listă |
+| `removeObserver(observer)` | Elimină observatorul din listă |
+| `serve(employee, product, customer)` | Validează că `employee` există în `employees` și `product` există în `products` (aruncă `IllegalArgumentException` altfel), apoi notifică toți observatorii prin `onMealServed` |
+
+### `OrderLog` (stub)
+
+Observer concret care înregistrează fiecare servire.
+
+**Câmpuri:**
+- `entries: MutableList<String>` — lista înregistrărilor
+
+**Metode de implementat:**
+
+| Metodă | Comportament |
+|--------|-------------|
+| `onMealServed(employee, product, customer)` | Adaugă un string de forma `"Client: <customer>, Produs: <product>, Angajat: <employee>"` în `entries` |
+| `writeToFile(path: String)` | Scrie fiecare intrare din `entries` pe câte o linie în fișierul `path` |
+
+**Exemplu:**
+```kotlin
+val kitchen = Kitchen(
+    employees = mutableListOf("Bob", "Alice"),
+    products  = mutableListOf("Burger", "Fries")
 )
-val browser = KidsBrowserFacade(proxy)
-
-println(browser.browse("https://wikipedia.org/wiki/Kotlin"))  // conținut pagină
-println(browser.browse("https://badsite.com/page"))           // "Acces blocat..."
+val log = OrderLog()
+kitchen.addObserver(log)
+kitchen.serve("Bob", "Burger", "Maria")
+// log.entries == ["Client: Maria, Produs: Burger, Angajat: Bob"]
 ```
 
 ---
 
-## Verificare
+## Tema 2 — Composite: Mind-Map Conferință
+
+Se modelează un arbore comportamental (mind-map) al participării la o conferință.
+
+### `MindObject` (interfață — gata)
+
+```kotlin
+interface MindObject {
+    fun showContent(level: Int)
+    fun addChild(obj: MindObject)
+    fun removeChild(obj: MindObject)
+}
+```
+
+### Noduri de implementat
+
+| Clasă | Tip | Comportament `showContent` | `addChild` / `removeChild` |
+|-------|-----|---------------------------|---------------------------|
+| `Calatorie(destination)` | Rădăcină | Afișează `"  ".repeat(level) + destination`, apoi apelează `showContent(level+1)` pe copii | Adaugă/elimină din lista internă |
+| `Activitate(name)` | Nod intern | Afișează `"  ".repeat(level) + name`, recurse pe copii | Adaugă/elimină din lista internă |
+| `Idee(description)` | Frunză | Afișează `"  ".repeat(level) + description` | Aruncă `UnsupportedOperationException` |
+| `Cadou(name)` | Frunză | Afișează `"  ".repeat(level) + name` | Aruncă `UnsupportedOperationException` |
+
+**Exemplu de utilizare:**
+```kotlin
+val calatorie = Calatorie("Conferinta RSA, San Francisco")
+val ziua1 = Activitate("Activitati din prima zi")
+ziua1.addChild(Idee("Vizita Alcatraz"))
+calatorie.addChild(ziua1)
+calatorie.showContent(0)
+// Conferinta RSA, San Francisco
+//   Activitati din prima zi
+//     Vizita Alcatraz
+```
+
+---
+
+## Tema 3 — Memento: Ceas
+
+Se implementează un ceas cu posibilitatea de a salva și restaura starea.
+
+### `ClockMemento` (data class — gata)
+
+```kotlin
+data class ClockMemento(val hours: Int, val minutes: Int, val seconds: Int)
+```
+
+### `Clock` (stub)
+
+**Câmpuri:** `hours`, `minutes`, `seconds` (Int, mutabili)
+
+**Metode de implementat:**
+
+| Metodă | Comportament |
+|--------|-------------|
+| `setTime(h, m, s)` | Setează ora. Aruncă `IllegalArgumentException` dacă `h !in 0..23`, `m !in 0..59` sau `s !in 0..59` |
+| `tickOnce()` | Adaugă 1 secundă. Dacă `seconds == 59`: seconds=0, minutes++. Dacă `minutes == 60` după incrementare: minutes=0, hours++ |
+| `save(): ClockMemento` | Returnează `ClockMemento(hours, minutes, seconds)` |
+| `restore(memento)` | Setează `hours`, `minutes`, `seconds` din `memento` |
+
+### `ClockCaretaker` (stub)
+
+Stivă LIFO care păstrează memento-urile.
+
+| Metodă | Comportament |
+|--------|-------------|
+| `push(memento)` | Adaugă memento-ul pe stivă |
+| `pop(): ClockMemento?` | Scoate și returnează cel mai recent memento, sau `null` dacă stiva e goală |
+
+**Exemplu (undo):**
+```kotlin
+val clock = Clock(10, 0, 0)
+val caretaker = ClockCaretaker()
+
+caretaker.push(clock.save())      // salvăm starea
+clock.setTime(20, 30, 0)          // modificăm
+clock.restore(caretaker.pop()!!)  // restaurăm
+// clock.hours == 10
+```
+
+---
+
+## Cum se rulează testele
 
 ```bash
-mvn test
+gradle test
 ```
-
-Testele acoperă:
-- **Tema 1:** tranzițiile automatului de stări + toate cele 4 tipuri de porți (cu Builder)
-- **Tema 2:** clonarea prototipului, blocarea/permiterea URL-urilor de Proxy, comportamentul Facade
 
 ---
 
-## Criterii de evaluare
+## Tabel de evaluare
 
-### Tema 1
-
-| # | Cerință | Punctaj |
-|---|---------|---------|
-| 1 | Automatul de stări (`AllHighState`, `AnyLowState`, tranzițiile corecte) | 2p |
-| 2 | Bridge: `AndImplementation` + `StateMachineAndImpl` | 2p |
-| 3 | Bridge: `AndGate` + clasele concrete (2/3/4/8 intrări) | 2p |
-| 4 | Builder: toate cele 4 builder-e funcționează corect | 2p |
-
-### Tema 2
-
-| # | Cerință | Punctaj |
-|---|---------|---------|
-| 1 | Prototype: `HttpRequest.clone()` returnează copie corectă | 1p |
-| 2 | Proxy: blochează domeniile din listă fără a apela clientul real | 3p |
-| 3 | Facade: `browse()` combină corect Prototype + Proxy | 2p |
-
-### Tema 3 (studiu)
-
-Mediator vs Proxy vs Adapter — pregătește o scurtă comparație (tabel sau câte un paragraf pentru fiecare pattern).
+| Cerință | Punctaj |
+|---------|---------|
+| `Kitchen.addObserver` / `removeObserver` / `serve` (validare + notificare) | 2p |
+| `OrderLog.onMealServed` + `writeToFile` | 1p |
+| `Activitate.showContent` + `addChild` / `removeChild` | 2p |
+| `Idee.showContent` + excepție la `addChild` / `removeChild` | 1p |
+| `Calatorie.showContent` + `addChild` / `removeChild` | 1p |
+| `Cadou.showContent` + excepție la `addChild` / `removeChild` | 0.5p |
+| `Clock.setTime` (validare) + `tickOnce` (overflow) | 1p |
+| `Clock.save` + `Clock.restore` | 0.5p |
+| `ClockCaretaker.push` / `pop` (LIFO) | 1p |
+| **Total** | **10p** |

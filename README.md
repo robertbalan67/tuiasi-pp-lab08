@@ -1,38 +1,24 @@
-# PP Lab 8 - Template GitHub Classroom
+# Lab 8 — Design Patterns în Kotlin
 
-Acest repository este un template pentru temele de la Laboratorul 8 (Design Patterns în Kotlin).
+Template GitHub Classroom pentru laboratorul 8 — Paradigme de Programare (TUIASI).
 
-## Ce conține template-ul
+## Conținut
 
-- proiect Kotlin configurat cu Maven
-- schelete de cod pentru două teme independente
-- teste unitare pentru ambele teme
-- enunțul detaliat în `ASSIGNMENT.md`
+Trei teme independente de design patterns:
 
-## Teme
+| Temă | Pattern | Fișiere principale |
+|------|---------|-------------------|
+| 1 | Observer | `observer/Kitchen.kt`, `observer/OrderLog.kt` |
+| 2 | Composite | `composite/Calatorie.kt`, `composite/Activitate.kt`, `composite/Idee.kt`, `composite/Cadou.kt` |
+| 3 | Memento | `memento/Clock.kt`, `memento/ClockCaretaker.kt` |
 
-| Temă | Design Patterns |
-|------|----------------|
-| **Tema 1** — Porți logice AND | Bridge + Builder + State (automat finit) |
-| **Tema 2** — Browser pentru copii | Prototype + Proxy + Facade |
-| **Tema 3** — Studiu | Mediator vs Proxy vs Adapter |
-
-## Structura sursă
-
-```
-src/main/kotlin/ro/tuiasi/pp/lab8/
-  gates/          ← Tema 1
-    bridge/       ← interfața și implementarea de calcul
-    state/        ← automatul finit de stări
-    abstraction/  ← ierarhia porților (Bridge - latura abstractizării)
-    builder/      ← builder-e pentru fiecare tip de poartă
-  browser/        ← Tema 2
-```
+Fișierele sursă conțin **schelete** (`TODO("De implementat")`).
+Testele din `src/test/` sunt complete și definesc comportamentul așteptat.
 
 ## Rulare teste
 
 ```bash
-mvn test
+gradle test
 ```
 
 ## GitHub Classroom
