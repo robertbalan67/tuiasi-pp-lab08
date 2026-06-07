@@ -1,29 +1,29 @@
 package ro.tuiasi.pp.lab8.observer
 
+// ─── Interfață (gata în repo — includem pentru completitudine) ────────────────
+
+interface MealObserver {
+    fun onMealServed(employee: String, product: String, customer: String)
+}
+
+// ─── Observer concret ─────────────────────────────────────────────────────────
+
 /**
- * Observer care înregistrează în memorie fiecare comandă servită.
- * La final, jurnalul poate fi scris într-un fișier prin [writeToFile].
- *
- * Fiecare înregistrare are forma: "Client: <customer>, Produs: <product>, Angajat: <employee>"
+ * Înregistrează fiecare servire ca string formatat.
+ * Poate persista jurnalul într-un fișier cu writeToFile().
  */
 class OrderLog : MealObserver {
 
-    /** Lista de înregistrări (câte una per servire). */
     val entries: MutableList<String> = mutableListOf()
 
-    /**
-     * Adaugă o înregistrare în jurnal.
-     * Format: "Client: <customer>, Produs: <product>, Angajat: <employee>"
-     */
     override fun onMealServed(employee: String, product: String, customer: String) {
-        TODO("De implementat")
+        entries.add("Client: $customer, Produs: $product, Angajat: $employee")
     }
 
     /**
-     * Scrie toate înregistrările în fișierul [path], câte o linie per înregistrare.
-     * Dacă [path] este gol, nu face nimic.
+     * Scrie fiecare intrare pe câte o linie în fișierul [path].
      */
     fun writeToFile(path: String) {
-        TODO("De implementat")
+        java.io.File(path).writeText(entries.joinToString("\n"))
     }
 }
